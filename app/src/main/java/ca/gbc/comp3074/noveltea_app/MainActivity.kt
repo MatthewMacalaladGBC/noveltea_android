@@ -27,12 +27,16 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -45,6 +49,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -91,7 +96,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                    ),
                    title = {
                        // Column inside of title for stacking multiple text items (varying size and weight)
-                       Column() {
+                       Column {
                            Text(text = "Noveltea", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                            Text(text = "By book lovers, for book lovers", fontSize = 16.sp)
                        }
@@ -122,6 +127,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                            .weight(1f)
                            .padding(horizontal = 24.dp)
                            .background(Color.White)
+                           .border(width = 1.dp, color = MaterialTheme.colorScheme.onBackground)
                    ) {
                        Text(text = "Search...",
                            color = MaterialTheme.colorScheme.secondary,
@@ -167,19 +173,94 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
     }
 }
 
+// Composable for Details page (book details)
 @Composable
 fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<Book>) {
+    // Finds the specific book from the book list dataset, based on the provided id
+    val book = books.find { it.id == bookId }
 
+    // Sets up another scaffold to allow for a top bar
+    // Displays a button to return to the home screen, as well as the app name
+    Scaffold(
+        topBar = {
+            // Center aligned top bar instead of the default small top bar
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+                title = {
+                    Text(text = "Noveltea", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                },
+                // Back arrow icon to take you back to the Home screen
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back button, return to Home screen")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+
+        // If the book exists, then will display the details pulled from the data set
+        book?.let {
+            Column(
+                modifier = Modifier.padding(innerPadding),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Cover image, centered and resized with padding
+                Surface(
+                    modifier = Modifier
+                        .height(300.dp)
+                        .width(200.dp)
+                        .padding(top = 30.dp),
+                    tonalElevation = 12.dp
+                ) {
+                    AsyncImage(
+                        model = book.coverImgUrl,
+                        contentDescription = "Cover image for ${book.title}"
+                    )
+                }
+                Spacer(Modifier.height(15.dp))
+                // Column to stack different text elements
+                // Horizontal padding so that text is not full-screen
+                Column(
+                    modifier = Modifier.padding(horizontal = 25.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Stacked items: title, author, rating, description, all spaced out
+                    Text(text = it.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(8.dp))
+                    Text(text = "by ${it.author}", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Text(text = "★ ${it.rating}", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(16.dp))
+                    Text(text = it.description, style = MaterialTheme.typography.bodyMedium)
+                }
+
+            }
+        } ?: Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            // If the passed book ID cannot be found, will display a default message instead
+            Text("Book not found.")
+        }
+    }
 }
 
+// Later on, maybe have different files for each composable?
+// At the very least, have AppNavHost as it's own (Separation of Concerns)
 @Composable
 fun AppNavHost(){
+    // Sets up the navController and gets list of books from the mock dataset
     val navController = rememberNavController()
     val books: List<Book> = MockDataset.getBooks()
 
+    // Defaults to "home" screen, or BookGridHomeScreen Composable
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { BookGridHomeScreen(navController = navController, books) }
         composable("detail/{bookId}") { backstackEntry ->
+            // Retrieves bookId based on the bookId passed when clicking on any book in the grid.
+            // Pulls from the passed navigation route, and turns it into an int (with a default of 0 if not found)
             val bookId = backstackEntry.arguments?.getString("bookId")?.toIntOrNull() ?: 0
             BookDetailScreen(navController = navController, bookId = bookId, books = books)
         }

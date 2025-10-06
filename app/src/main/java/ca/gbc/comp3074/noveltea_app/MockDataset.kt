@@ -1,8 +1,10 @@
 package ca.gbc.comp3074.noveltea_app
 
+// Mock Database object to hold dummy book information
+// For actual app, book data will be pulled from an API (i.e. Open Library API)
 object MockDataset {
     fun getBooks(): List<Book> = listOf(
-        Book(0, "The Hate U Give", "Angie Thomas", 4.3,
+        Book(1, "The Hate U Give", "Angie Thomas", 4.3,
             """
                 Sixteen-year-old Starr Carter moves between two worlds: the poor neighborhood where she lives and the fancy suburban prep school she attends. The uneasy balance between these worlds is shattered when Starr witnesses the fatal shooting of her childhood best friend Khalil at the hands of a police officer. Khalil was unarmed.
 
@@ -12,19 +14,19 @@ object MockDataset {
             """.trimIndent(),
             "https://ia902309.us.archive.org/view_archive.php?archive=/20/items/l_covers_0008/l_covers_0008_04.zip&file=0008047722-L.jpg"
         ),
-        Book(1, "The Two Towers", "J.R.R. Tolkien", 4.4,
+        Book(2, "The Two Towers", "J.R.R. Tolkien", 4.4,
             """
                 Frodo and the Companions of the Ring have been beset by danger during their quest to prevent the Ruling Ring from falling into the hands of the Dark Lord by destroying it in the Cracks of Doom. They have lost the wizard, Gandalf, in the battle with an evil spirit in the Mines of Moria; and at the Falls of Rauros, Boromir, seduced by the power of the Ring, tried to seize it by force. While Frodo and Sam made their escape the rest of the company were attacked by Orcs. Now they continue their journey alone down the great River Anduin – alone, that is, save for the mysterious creeping figure that follows wherever they go.
             """.trimIndent(),
             "https://covers.openlibrary.org/b/id/14627082-L.jpg"
         ),
-        Book(2, "The Alchemist", "Paulo Coelho", 3.8,
+        Book(3, "The Alchemist", "Paulo Coelho", 3.8,
             """
                 The Alchemist details the journey of a young Andalusian shepherd boy named Santiago. Santiago, believing a recurring dream to be prophetic, decides to travel to the pyramids of Egypt to find treasure. On the way, he encounters love, danger, opportunity and disaster. One of the significant characters that he meets is an old king named Melchizedek who tells him that "When you want something, all the universe conspires in helping you to achieve it." This is the core philosophy and motif of the book. 
             """.trimIndent(),
             "https://covers.openlibrary.org/b/id/15121528-L.jpg"
         ),
-        Book(3, "The Great Gatsby", "F. Scott Fitzgerald", 4.0,
+        Book(4, "The Great Gatsby", "F. Scott Fitzgerald", 4.0,
             """
                 Here is a novel, glamorous, ironical, compassionate – a marvelous fusion into unity of the curious incongruities of the life of the period – which reveals a hero like no other – one who could live at no other time and in no other place. But he will live as a character, we surmise, as long as the memory of any reader lasts.
 
