@@ -279,16 +279,18 @@ fun ProfileScreen(navController: NavHostController, books: List<Book>) {
             )
         }
     ) { innerPadding ->
-
+        // Same lazy grid as what was used, with a few extra items above the book grid
         LazyVerticalGrid(
             columns = GridCells.Fixed(2), // 2 set columns
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize() // fillMaxSize instead of wrapContentWidth() to keep it bounded
                 .padding(innerPadding),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalArrangement = Arrangement.spacedBy(40.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
+            // Item that spans both grid columns
+            // Keeps objects in line in a single column instead of the two we see for the book grid
             item(span = { GridItemSpan(2) }) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(innerPadding),
@@ -297,11 +299,14 @@ fun ProfileScreen(navController: NavHostController, books: List<Book>) {
                     Row(
                         modifier = Modifier.height(200.dp)
                     ) {
+                        // Need to fill with actual elements to reflect actual layout
+                        // static profile image, user name, etc.
                         Text(text = "Row for profile image and User Name")
                     }
                     Row(
                         modifier = Modifier.height(100.dp)
                     ) {
+                        // Same as above, need properly laid-out mock-up
                         Text(text = "Row for profile info - followers, following, reviews")
                     }
 
