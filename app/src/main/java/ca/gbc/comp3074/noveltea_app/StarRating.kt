@@ -19,7 +19,7 @@ private val Gray  = Color(0xFFBDBDBD)
 
 @Composable
 fun StarRating(
-    value: Float,                // 0.0 .. 5.0 (we use 0.5 steps)
+    value: Float,
     onChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = 28.dp,
@@ -33,7 +33,7 @@ fun StarRating(
                 value >= idx - 0.5f    -> Icons.Filled.StarHalf
                 else                   -> Icons.Outlined.Star
             }
-            val tint = if (value >= idx - 0.5f) Amber else Gray  // lit if half or more
+            val tint = if (value >= idx - 0.5f) Amber else Gray
 
             Icon(
                 imageVector = icon,

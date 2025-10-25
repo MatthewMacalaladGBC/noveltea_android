@@ -97,7 +97,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
         else books.filter { it.title.lowercase().contains(q) || it.author.lowercase().contains(q) }
     }
 
-    // ---- Login dialog ----
+    // Login
     if (showLogin) {
         NameLogin(
             onDismiss = { showLogin = false },
@@ -146,7 +146,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                         .padding(horizontal = 16.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // safe avatar button
+                    // avatar button
                     OutlinedButton(
                         onClick = { navController.navigate("profile") },
                         modifier = Modifier.size(40.dp),
@@ -204,7 +204,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
 }
 
 
-// Composable for Details page (book details)
+// book details
 @Composable
 fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<Book>) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
@@ -235,7 +235,6 @@ fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<
 
         var rating by remember { mutableStateOf(RatingStore.get(ctx, book.id)) }
 
-        // Always scrollable, so Save button is reachable on any screen size
         androidx.compose.foundation.lazy.LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
