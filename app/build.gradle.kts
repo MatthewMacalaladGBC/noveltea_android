@@ -42,9 +42,10 @@ android {
 dependencies {
     // For loading images
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation(libs.androidx.material3)
 
     // Nav Controller: JetPack Compose Integration
-    val nav_version = "2.9.5"
+    val nav_version = "2.8.3"
     implementation("androidx.navigation:navigation-compose:$nav_version")
 
     implementation(libs.androidx.core.ktx)
@@ -62,4 +63,6 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    implementation("androidx.compose.material:material-icons-extended")
+
 }

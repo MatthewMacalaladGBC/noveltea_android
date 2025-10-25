@@ -3,7 +3,6 @@
 package ca.gbc.comp3074.noveltea_app
 
 import android.os.Bundle
-import android.security.identity.AccessControlProfile
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,7 +10,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,14 +23,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -43,7 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -64,6 +58,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ca.gbc.comp3074.noveltea_app.ui.theme.Noveltea_appTheme
 import coil.compose.AsyncImage
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 
 
 class MainActivity : ComponentActivity() {
@@ -81,174 +83,232 @@ class MainActivity : ComponentActivity() {
 // Composable for Home Screen (book grid layout)
 @Composable
 fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
-    // Scaffold composable to stack top bar on top of grid layout
-    Scaffold(
-       // Using compose App Bar setups
-       topBar = {
-           // Column to stack two items
-           // - TopAppBar for the app title and tagline
-           // - Row to hold profile image and search bar
-           // - (default icon and static text box used as UI placeholders)
-           Column {
-               // Top row - Title + tagline
-               TopAppBar(
-                   colors = TopAppBarDefaults.topAppBarColors(
-                       containerColor = MaterialTheme.colorScheme.primaryContainer,
-                       titleContentColor = MaterialTheme.colorScheme.primary,
-                   ),
-                   title = {
-                       // Column inside of title for stacking multiple text items (varying size and weight)
-                       Column {
-                           Text(text = "Noveltea", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                           Text(text = "By book lovers, for book lovers", fontSize = 16.sp)
-                       }
-                   }
-               )
-               Spacer(modifier = Modifier.height(20.dp))
-               // Row below holding profile image and search bar (not functional, placeholder for UI mock-up)
-               Row(
-                   modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                   horizontalArrangement = Arrangement.SpaceBetween,
-                   verticalAlignment = Alignment.CenterVertically
-               ) {
-                   // Default image icon (pulled from lab 3)
-                   Image(
-                       painter = painterResource(R.drawable.ic_launcher_foreground),
-                       contentDescription = "Logo",
-                       modifier = Modifier
-                           .size(50.dp)
-                           .clip(CircleShape)
-                           .border(2.dp,
-                               MaterialTheme.colorScheme.primary,
-                               CircleShape
-                           )
-                           .clickable { navController.navigate("profile") }
-                   )
-                   // Search text box - not interactable as of now (placeholder)
-                   Box(
-                       modifier = Modifier
-                           .weight(1f)
-                           .padding(horizontal = 24.dp)
-                           .background(Color.White)
-                           .border(width = 1.dp, color = MaterialTheme.colorScheme.onBackground)
-                   ) {
-                       Text(text = "Search...",
-                           color = MaterialTheme.colorScheme.secondary,
-                           modifier = Modifier.padding(start = 8.dp)
-                       )
-                   }
-               }
-           }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
 
-       }
+    // login state
+    var name by remember { mutableStateOf(NameStore.getName(ctx)) }
+    var showLogin by remember { mutableStateOf(false) }
+
+    // search
+    var query by remember { mutableStateOf("") }
+    val filtered = remember(query, books) {
+        val q = query.trim().lowercase()
+        if (q.isEmpty()) books
+        else books.filter { it.title.lowercase().contains(q) || it.author.lowercase().contains(q) }
+    }
+
+    // ---- Login dialog ----
+    if (showLogin) {
+        NameLogin(
+            onDismiss = { showLogin = false },
+            onSubmit = { entered ->
+                NameStore.setName(ctx, entered)
+                name = entered
+                showLogin = false
+                android.widget.Toast.makeText(ctx, "Hello, $entered!", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+
+    Scaffold(
+        topBar = {
+            Column {
+                // Row 1: title left, login right
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Noveltea", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text("By book lovers, for book lovers", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Button(onClick = {
+                        if (name.isNullOrBlank()) {
+                            showLogin = true
+                        } else {
+                            NameStore.clear(ctx)
+                            name = null
+                            android.widget.Toast.makeText(ctx, "Logged out", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }) {
+                        Text(if (name.isNullOrBlank()) "Login" else "Logout")
+                    }
+                }
+
+                // Row 2: profile button (left) + search (right)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // safe avatar button
+                    OutlinedButton(
+                        onClick = { navController.navigate("profile") },
+                        modifier = Modifier.size(40.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        shape = CircleShape
+                    ) { Text("👤") }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Search…") },
+                        singleLine = true
+                    )
+                }
+            }
+        }
     ) { innerPadding ->
-        // Grid holding book cover images and basic info
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2), // 2 set columns
-            modifier = Modifier.wrapContentWidth().padding(innerPadding),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalArrangement = Arrangement.spacedBy(40.dp),
+            columns = GridCells.Fixed(2),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            // Passes list of book items to be used in the grid
-            items(books) { book ->
+            items(filtered, key = { it.id }) { book ->
                 Column(
-                    modifier = Modifier.width(150.dp)
-                        // On click, uses navController to navigate to BookDetailScreen composable
-                        // Passes id of the clicked book to display proper information
-                        .clickable { navController.navigate("detail/${book.id}") },
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { navController.navigate("detail/${book.id}") }
                 ) {
                     Surface(
-                        modifier = Modifier.size(width = 150.dp, height = 225.dp).padding(bottom = 8.dp),
-                        shadowElevation = 12.dp
+                        shadowElevation = 6.dp,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.size(width = 150.dp, height = 220.dp)
                     ) {
-                        AsyncImage(
+                        coil.compose.AsyncImage(
                             model = book.coverImgUrl,
                             contentDescription = "Cover image for ${book.title}"
                         )
                     }
-                    Text(text = book.title, fontWeight = FontWeight.Bold)
-                    Text(text = book.author, fontStyle = FontStyle.Italic)
+                    Spacer(Modifier.height(8.dp))
+                    Text(book.title, fontWeight = FontWeight.Bold)
+                    Text(book.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
                 }
             }
         }
     }
 }
 
+
 // Composable for Details page (book details)
 @Composable
 fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<Book>) {
-    // Finds the specific book from the book list dataset, based on the provided id
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     val book = books.find { it.id == bookId }
 
-    // Sets up another scaffold to allow for a top bar
-    // Displays a button to return to the home screen, as well as the app name
     Scaffold(
         topBar = {
-            // Center aligned top bar instead of the default small top bar
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
-                title = {
-                    Text(text = "Noveltea", fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                },
-                // Back arrow icon to take you back to the Home screen
+                title = { Text("Noveltea", fontSize = 30.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back button, return to Home screen")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         }
     ) { innerPadding ->
-
-        // If the book exists, then will display the details pulled from the data set
-        book?.let {
-            Column(
-                modifier = Modifier.padding(innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Cover image, centered and resized with padding
-                Surface(
-                    modifier = Modifier
-                        .height(300.dp)
-                        .width(200.dp)
-                        .padding(top = 30.dp),
-                    tonalElevation = 12.dp
-                ) {
-                    AsyncImage(
-                        model = book.coverImgUrl,
-                        contentDescription = "Cover image for ${book.title}"
-                    )
-                }
-                Spacer(Modifier.height(15.dp))
-                // Column to stack different text elements
-                // Horizontal padding so that text is not full-screen
-                Column(
-                    modifier = Modifier.padding(horizontal = 25.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Stacked items: title, author, rating, description, all spaced out
-                    Text(text = it.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    Text(text = "by ${it.author}", style = MaterialTheme.typography.bodyLarge)
-                    Spacer(Modifier.height(8.dp))
-                    Text(text = "★ ${it.rating}", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(Modifier.height(16.dp))
-                    Text(text = it.description, style = MaterialTheme.typography.bodyMedium)
-                }
-
+        if (book == null) {
+            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                Text("Book not found.")
             }
-        } ?: Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            // If the passed book ID cannot be found, will display a default message instead
-            Text("Book not found.")
+            return@Scaffold
+        }
+
+        var rating by remember { mutableStateOf(RatingStore.get(ctx, book.id)) }
+
+        // Always scrollable, so Save button is reachable on any screen size
+        androidx.compose.foundation.lazy.LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 24.dp),
+            contentPadding = PaddingValues(top = 24.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                // center the cover safely
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Surface(
+                        tonalElevation = 12.dp,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier
+                            .width(200.dp)
+                            .height(300.dp)
+                    ) {
+                        AsyncImage(model = book.coverImgUrl, contentDescription = "Cover for ${book.title}")
+                    }
+                }
+            }
+            item {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text(book.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(6.dp))
+                    Text("by ${book.author}", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(Modifier.height(6.dp))
+                    Text("★ ${book.rating}", style = MaterialTheme.typography.titleLarge)
+                }
+            }
+            item {
+                Text(book.description, style = MaterialTheme.typography.bodyMedium)
+            }
+            item {
+                Button(
+                    onClick = {
+                        val ids = ReadingListStore.getIds(ctx)
+                        if (book.id in ids) {
+                            android.widget.Toast.makeText(ctx, "Already in your list", android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
+                            ReadingListStore.add(ctx, book.id)
+                            android.widget.Toast.makeText(ctx, "Added to your list", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Add to Reading List")
+                }
+            }
+            item {
+                Text("Your Rating", fontWeight = FontWeight.Bold)
+                StarRating(value = rating, onChange = { rating = it })
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        RatingStore.set(ctx, book.id, rating)
+                        android.widget.Toast.makeText(
+                            ctx,
+                            "Saved rating: ${"%.1f".format(rating)} ★",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save Rating")
+                }
+            }
+
         }
     }
 }
+
 
 // Profile page screen to display profile info
 // For the mock-up, will be populated with static dummy info
@@ -257,87 +317,119 @@ fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<
 // but each user will hold their own list of books in actuality
 @Composable
 fun ProfileScreen(navController: NavHostController, books: List<Book>) {
-    // Same Scaffold topBar as the Details screen (find a way to reduce redundancy later)
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val panelColor = Color(0xFF1F2A44)
+    val name = (NameStore.getName(ctx) ?: "Guest").uppercase()
+
+
+    var readingList by remember { mutableStateOf(ReadingListStore.getBooks(ctx, books)) }
+
     Scaffold(
         topBar = {
-            // Center aligned top bar instead of the default small top bar
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
-                title = {
-                    Text(text = "Noveltea", fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                },
-                // Back arrow icon to take you back to the Home screen
+                title = { Text("Noveltea", fontSize = 24.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back button, return to Home screen")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         }
     ) { innerPadding ->
-        // Same lazy grid as what was used, with a few extra items above the book grid
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2), // 2 set columns
-            modifier = Modifier
-                .fillMaxSize() // fillMaxSize instead of wrapContentWidth() to keep it bounded
-                .padding(innerPadding),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalArrangement = Arrangement.spacedBy(40.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
-        ) {
-            // Item that spans both grid columns
-            // Keeps objects in line in a single column instead of the two we see for the book grid
-            item(span = { GridItemSpan(2) }) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(innerPadding),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.height(200.dp)
-                    ) {
-                        // Need to fill with actual elements to reflect actual layout
-                        // static profile image, user name, etc.
-                        Text(text = "Row for profile image and User Name")
-                    }
-                    Row(
-                        modifier = Modifier.height(100.dp)
-                    ) {
-                        // Same as above, need properly laid-out mock-up
-                        Text(text = "Row for profile info - followers, following, reviews")
-                    }
 
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+        ) {
+            // Header
+            Surface(
+                color = panelColor,
+                tonalElevation = 2.dp,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        // simple safe avatar
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { /* no-op */ },
+                            modifier = Modifier.size(64.dp),
+                            contentPadding = PaddingValues(0.dp),
+                            shape = CircleShape
+                        ) { Text("👤") }
+
+                        Spacer(Modifier.width(12.dp))
+                        Text(name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Text("Followers 20", color = Color.White, modifier = Modifier.weight(1f))
+                        Text("Following 35", color = Color.White, modifier = Modifier.weight(1f))
+                        val reviewsCount = books.count { RatingStore.get(ctx, it.id) > 0f }
+                        Text("Reviews $reviewsCount", color = Color.White, modifier = Modifier.weight(1f))
+                    }
                 }
             }
 
-            // Passes list of book items to be used in the grid
-            items(books) { book ->
-                Column(
-                    modifier = Modifier.width(150.dp)
-                        // On click, uses navController to navigate to BookDetailScreen composable
-                        // Passes id of the clicked book to display proper information
-                        .clickable { navController.navigate("detail/${book.id}") },
-                    horizontalAlignment = Alignment.CenterHorizontally
+            Spacer(Modifier.height(12.dp))
+            Text("Lists", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Spacer(Modifier.height(8.dp))
+
+            if (readingList.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        "Your reading list is empty.\nGo add some books from Home!",
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
-                    Surface(
-                        modifier = Modifier.size(width = 150.dp, height = 225.dp).padding(bottom = 8.dp),
-                        shadowElevation = 12.dp
-                    ) {
-                        AsyncImage(
-                            model = book.coverImgUrl,
-                            contentDescription = "Cover image for ${book.title}"
-                        )
+                    items(readingList, key = { it.id }) { b ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { navController.navigate("detail/${b.id}") }
+                        ) {
+                            Surface(
+                                shadowElevation = 6.dp,
+                                shape = MaterialTheme.shapes.medium,
+                                modifier = Modifier.size(width = 150.dp, height = 220.dp)
+                            ) {
+                                AsyncImage(model = b.coverImgUrl, contentDescription = "Cover for ${b.title}")
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(b.title, fontWeight = FontWeight.Bold)
+                            Text(b.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
+
+                            val myRating = RatingStore.get(ctx, b.id)
+                            if (myRating > 0f) StarDisplay(value = myRating)
+
+                            androidx.compose.material3.TextButton(onClick = {
+                                ReadingListStore.remove(ctx, b.id)
+                                readingList = ReadingListStore.getBooks(ctx, books)
+                                android.widget.Toast.makeText(ctx, "Removed: ${b.title}", android.widget.Toast.LENGTH_SHORT).show()
+                            }) { Text("Remove") }
+                        }
                     }
-                    Text(text = book.title, fontWeight = FontWeight.Bold)
-                    Text(text = book.author, fontStyle = FontStyle.Italic)
                 }
             }
         }
     }
 }
+
 
 // Later on, maybe have different files for each composable?
 // At the very least, have AppNavHost as it's own (Separation of Concerns)
@@ -349,7 +441,7 @@ fun AppNavHost(){
 
     // Defaults to "home" screen, or BookGridHomeScreen Composable
     NavHost(navController = navController, startDestination = "home") {
-        composable("home") { BookGridHomeScreen(navController = navController, books) }
+        composable("home") { BookGridHomeScreen(navController = navController, books = books) }
         composable("detail/{bookId}") { backstackEntry ->
             // Retrieves bookId based on the bookId passed when clicking on any book in the grid.
             // Pulls from the passed navigation route, and turns it into an int (with a default of 0 if not found)

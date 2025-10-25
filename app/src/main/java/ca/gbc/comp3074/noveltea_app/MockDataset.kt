@@ -12,8 +12,7 @@ object MockDataset {
 
                 But what Starr does—or does not—say could upend her community. It could also endanger her life.
             """.trimIndent(),
-            "https://ia902309.us.archive.org/view_archive.php?archive=/20/items/l_covers_0008/l_covers_0008_04.zip&file=0008047722-L.jpg"
-        ),
+            "https://covers.openlibrary.org/b/id/14859361-L.jpg"        ),
         Book(2, "The Two Towers", "J.R.R. Tolkien", 4.4,
             """
                 Frodo and the Companions of the Ring have been beset by danger during their quest to prevent the Ruling Ring from falling into the hands of the Dark Lord by destroying it in the Cracks of Doom. They have lost the wizard, Gandalf, in the battle with an evil spirit in the Mines of Moria; and at the Falls of Rauros, Boromir, seduced by the power of the Ring, tried to seize it by force. While Frodo and Sam made their escape the rest of the company were attacked by Orcs. Now they continue their journey alone down the great River Anduin – alone, that is, save for the mysterious creeping figure that follows wherever they go.
@@ -37,6 +36,16 @@ object MockDataset {
                 It is a magical, living book, blended of irony, romance, and mysticism. 
             """.trimIndent(),
             "https://ia600100.us.archive.org/view_archive.php?archive=/5/items/l_covers_0012/l_covers_0012_36.zip&file=0012364437-L.jpg"
+        ),
+        Book(
+            5, "Harry Potter and the Sorcerer’s Stone", "J.K. Rowling", 4.7,
+            "Harry discovers he is a wizard and attends Hogwarts School of Witchcraft and Wizardry, where he uncovers the truth about his past.",
+            "https://covers.openlibrary.org/b/id/14656853-L.jpg"
+        ),
+        Book(
+            6, "To Kill a Mockingbird", "Harper Lee", 4.8,
+            "A coming-of-age story set in the racially charged American South, seen through the eyes of young Scout Finch as her father defends an innocent man.",
+            "https://covers.openlibrary.org/b/id/14351077-L.jpg"
         )
     )
 }
