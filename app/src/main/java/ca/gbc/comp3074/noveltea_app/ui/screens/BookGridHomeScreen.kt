@@ -49,12 +49,13 @@ import ca.gbc.comp3074.noveltea_app.ui.components.NameLogin
 fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
 
-    // login state
+    // user login state
     var name by remember { mutableStateOf(NameStore.getName(ctx)) }
     var showLogin by remember { mutableStateOf(false) }
 
-    // search
+    // search box
     var query by remember { mutableStateOf("") }
+    // filter the book list
     val filtered = remember(query, books) {
         val q = query.trim().lowercase()
         if (q.isEmpty()) books
@@ -81,7 +82,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.statusBars)
             ) {
-                // Row 1: title left, login right
+                // Row #1: title left, login right
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -93,6 +94,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                         Text("Noveltea", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                         Text("By book lovers, for book lovers", style = MaterialTheme.typography.bodySmall)
                     }
+                    //login or logout button
                     Button(onClick = {
                         if (name.isNullOrBlank()) {
                             showLogin = true
@@ -106,7 +108,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                     }
                 }
 
-                // Row 2: profile button (left) + search (right)
+                // Row #2: profile button (left) and search (right)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -123,6 +125,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
 
                     Spacer(Modifier.width(8.dp))
 
+                    //search text area
                     OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
@@ -162,6 +165,8 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                         )
                     }
                     Spacer(Modifier.height(8.dp))
+
+                    //Book title and author
                     Text(book.title, fontWeight = FontWeight.Bold)
                     Text(book.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
                 }
