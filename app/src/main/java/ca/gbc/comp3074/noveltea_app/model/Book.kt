@@ -1,4 +1,4 @@
-package ca.gbc.comp3074.noveltea_app
+package ca.gbc.comp3074.noveltea_app.model
 
 data class Book(
     val id: Int,
