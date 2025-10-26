@@ -62,6 +62,10 @@ dependencies {
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
+    // Material icons (filled and outlined)
+    implementation(libs.androidx.compose.material.icons.core)
+    implementation(libs.androidx.compose.material.icons.extended)
+
     // Jetpack Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
