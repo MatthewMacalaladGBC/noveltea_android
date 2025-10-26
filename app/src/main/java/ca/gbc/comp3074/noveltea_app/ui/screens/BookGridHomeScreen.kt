@@ -2,140 +2,181 @@
 
 package ca.gbc.comp3074.noveltea_app.ui.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import ca.gbc.comp3074.noveltea_app.model.Book
+import ca.gbc.comp3074.noveltea_app.data.local.NameStore
+import ca.gbc.comp3074.noveltea_app.ui.components.NameLogin
 import ca.gbc.comp3074.noveltea_app.R
-import coil.compose.AsyncImage
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+
 
 // Composable for Home Screen (book grid layout)
 @Composable
 fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
-    // Scaffold composable to stack top bar on top of grid layout
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+
+    // user login state
+    var name by remember { mutableStateOf(NameStore.getName(ctx)) }
+    var showLogin by remember { mutableStateOf(false) }
+
+    // search box
+    var query by remember { mutableStateOf("") }
+    // filter the book list
+    val filtered = remember(query, books) {
+        val q = query.trim().lowercase()
+        if (q.isEmpty()) books
+        else books.filter { it.title.lowercase().contains(q) || it.author.lowercase().contains(q) }
+    }
+
+    // Login
+    if (showLogin) {
+        NameLogin(
+            onDismiss = { showLogin = false },
+            onSubmit = { entered ->
+                NameStore.setName(ctx, entered)
+                name = entered
+                showLogin = false
+                android.widget.Toast.makeText(ctx, "Hello, $entered!", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+
     Scaffold(
-        // Using compose App Bar setups
         topBar = {
-            // Column to stack two items
-            // - TopAppBar for the app title and tagline
-            // - Row to hold profile image and search bar
-            // - (default icon and static text box used as UI placeholders)
-            Column {
-                // Top row - Title + tagline
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    title = {
-                        // Column inside of title for stacking multiple text items (varying size and weight)
-                        Column {
-                            Text(text = "Noveltea", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            Text(text = "By book lovers, for book lovers", fontSize = 16.sp)
-                        }
-                    }
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                // Row below holding profile image and search bar (not functional, placeholder for UI mock-up)
+            Column(
+                modifier = Modifier
+                    .windowInsetsPadding(WindowInsets.statusBars)
+            ) {
+                // Row #1: title left, login right
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Default image icon (pulled from lab 3)
-                    Image(
-                        painter = painterResource(R.drawable.ic_launcher_foreground),
-                        contentDescription = "Logo",
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(CircleShape)
-                            .border(2.dp,
-                                MaterialTheme.colorScheme.primary,
-                                CircleShape
-                            )
-                            .clickable { navController.navigate("profile") }
-                    )
-                    // Search text box - not interactable as of now (placeholder)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 24.dp)
-                            .background(Color.White)
-                            .border(width = 1.dp, color = MaterialTheme.colorScheme.onBackground)
-                    ) {
-                        Text(text = "Search...",
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                    Column {
+                        Text("Noveltea", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text("By book lovers, for book lovers", style = MaterialTheme.typography.bodySmall)
+                    }
+                    //login or logout button
+                    Button(onClick = {
+                        if (name.isNullOrBlank()) {
+                            showLogin = true
+                        } else {
+                            NameStore.clear(ctx)
+                            name = null
+                            android.widget.Toast.makeText(ctx, "Logged out", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }) {
+                        Text(if (name.isNullOrBlank()) "Login" else "Logout")
                     }
                 }
-            }
 
+                // Row #2: profile button (left) and search (right)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // avatar button
+                    OutlinedButton(
+                        onClick = { navController.navigate("profile") },
+                        modifier = Modifier.size(40.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        shape = CircleShape
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.face),
+                            contentDescription = "Profile picture"
+                    ) }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    //search text area
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Search…") },
+                        singleLine = true
+                    )
+                }
+            }
         }
     ) { innerPadding ->
-        // Grid holding book cover images and basic info
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2), // 2 set columns
-            modifier = Modifier.wrapContentWidth().padding(innerPadding),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalArrangement = Arrangement.spacedBy(40.dp),
+            columns = GridCells.Fixed(2),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            // Passes list of book items to be used in the grid
-            items(books) { book ->
+            items(filtered, key = { it.id }) { book ->
                 Column(
-                    modifier = Modifier.width(150.dp)
-                        // On click, uses navController to navigate to BookDetailScreen composable
-                        // Passes id of the clicked book to display proper information
-                        .clickable { navController.navigate("detail/${book.id}") },
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { navController.navigate("detail/${book.id}") }
                 ) {
                     Surface(
-                        modifier = Modifier.size(width = 150.dp, height = 225.dp).padding(bottom = 8.dp),
-                        shadowElevation = 12.dp
+                        shadowElevation = 6.dp,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.size(width = 150.dp, height = 220.dp)
                     ) {
-                        AsyncImage(
+                        coil.compose.AsyncImage(
                             model = book.coverImgUrl,
                             contentDescription = "Cover image for ${book.title}"
                         )
                     }
-                    Text(text = book.title, fontWeight = FontWeight.Bold)
-                    Text(text = book.author, fontStyle = FontStyle.Italic)
+                    Spacer(Modifier.height(8.dp))
+
+                    //Book title and author
+                    Text(book.title, fontWeight = FontWeight.Bold)
+                    Text(book.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
                 }
             }
         }
