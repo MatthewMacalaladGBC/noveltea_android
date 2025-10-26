@@ -43,6 +43,10 @@ import androidx.navigation.NavHostController
 import ca.gbc.comp3074.noveltea_app.model.Book
 import ca.gbc.comp3074.noveltea_app.data.local.NameStore
 import ca.gbc.comp3074.noveltea_app.ui.components.NameLogin
+import ca.gbc.comp3074.noveltea_app.R
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+
 
 // Composable for Home Screen (book grid layout)
 @Composable
@@ -121,7 +125,11 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                         modifier = Modifier.size(40.dp),
                         contentPadding = PaddingValues(0.dp),
                         shape = CircleShape
-                    ) { Text("👤") }
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.face),
+                            contentDescription = "Profile picture"
+                    ) }
 
                     Spacer(Modifier.width(8.dp))
 

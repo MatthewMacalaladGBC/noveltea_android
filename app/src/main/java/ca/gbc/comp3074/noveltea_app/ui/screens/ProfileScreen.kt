@@ -2,6 +2,7 @@
 
 package ca.gbc.comp3074.noveltea_app.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,11 +40,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import ca.gbc.comp3074.noveltea_app.R
 import ca.gbc.comp3074.noveltea_app.data.local.NameStore
 import ca.gbc.comp3074.noveltea_app.data.local.RatingStore
 import ca.gbc.comp3074.noveltea_app.data.local.ReadingListStore
@@ -103,7 +106,11 @@ fun ProfileScreen(navController: NavHostController, books: List<Book>) {
                             modifier = Modifier.size(64.dp),
                             contentPadding = PaddingValues(0.dp),
                             shape = CircleShape
-                        ) { Text("👤") }
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.face),
+                                contentDescription = "Profile picture"
+                            ) }
 
                         Spacer(Modifier.width(12.dp))
                         Text(name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.weight(1f))
