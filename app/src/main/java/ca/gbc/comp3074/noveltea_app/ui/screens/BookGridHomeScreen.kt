@@ -68,12 +68,6 @@ fun BookGridHomeScreen(navController: NavHostController, viewModel: BookViewMode
 
     // search box
     var query by remember { mutableStateOf("") }
-    // filter the book list
-    val filtered = remember(query, books) {
-        val q = query.trim().lowercase()
-        if (q.isEmpty()) books
-        else books.filter { it.title.lowercase().contains(q) || it.author.lowercase().contains(q) }
-    }
 
     // Login
     if (showLogin) {
@@ -130,7 +124,8 @@ fun BookGridHomeScreen(navController: NavHostController, viewModel: BookViewMode
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         // avatar button
                         OutlinedButton(
@@ -149,11 +144,21 @@ fun BookGridHomeScreen(navController: NavHostController, viewModel: BookViewMode
                         //search text area
                         OutlinedTextField(
                             value = query,
-                            onValueChange = { query = it },
+                            onValueChange = {
+                                query = it
+                                if (query.isEmpty()) {
+                                    viewModel.loadTrendingBooks()
+                                }
+                            },
                             modifier = Modifier.weight(1f),
                             placeholder = { Text("Search…") },
                             singleLine = true
                         )
+                        Button(
+                            onClick = { viewModel.searchBooks(query) },
+                            enabled = query.isNotBlank()
+                        ) { Text("Go") }
+
                     }
                 }
             }
@@ -168,7 +173,7 @@ fun BookGridHomeScreen(navController: NavHostController, viewModel: BookViewMode
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                items(filtered, key = { it.id }) { book ->
+                items(books, key = { it.id }) { book ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
@@ -182,7 +187,9 @@ fun BookGridHomeScreen(navController: NavHostController, viewModel: BookViewMode
                         ) {
                             coil.compose.AsyncImage(
                                 model = book.coverImgUrl,
-                                contentDescription = "Cover image for ${book.title}"
+                                contentDescription = "Cover image for ${book.title}",
+                                placeholder = painterResource(id = R.drawable.cover_not_found),
+                                error = painterResource(id = R.drawable.cover_not_found),
                             )
                         }
                         Spacer(Modifier.height(8.dp))

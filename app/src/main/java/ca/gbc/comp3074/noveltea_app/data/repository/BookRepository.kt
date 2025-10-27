@@ -14,8 +14,8 @@ class BookRepository {
         return response.docs.mapNotNull { doc ->
             val id = doc.key?.removePrefix("/works/")
             val title = doc.title ?: "Untitled"
-            val author = doc.author?.firstOrNull() ?: "Unknown"
-            val cover = doc.coverId.let { "https://covers.openlibrary.org/b/id/$it-L.jpg" }
+            val author = doc.author_name?.firstOrNull() ?: "Unknown"
+            val cover = doc.cover_i.let { "https://covers.openlibrary.org/b/id/$it-L.jpg" }
 
             if (id != null)
                 Book(
@@ -39,8 +39,8 @@ class BookRepository {
             .take(limit)
             .mapNotNull { doc ->
                 val id = doc.key?.removePrefix("/works/")
-                val author = doc.author?.firstOrNull() ?: "Unknown"
-                val coverURL = doc.coverId?.let { "https://covers.openlibrary.org/b/id/$it-L.jpg" }
+                val author = doc.author_name?.firstOrNull() ?: "Unknown"
+                val coverURL = doc.cover_i?.let { "https://covers.openlibrary.org/b/id/$it-L.jpg" }
 
                 if (id != null)
                     Book(
@@ -65,7 +65,7 @@ class BookRepository {
             else -> "No description could be found."
         }
 
-        val coverURL = response.coverId?.firstOrNull()?.let { id ->
+        val coverURL = response.covers?.firstOrNull()?.let { id ->
             "https://covers.openlibrary.org/b/id/$id-L.jpg"
         } ?: ""
 
@@ -73,7 +73,7 @@ class BookRepository {
         val authorName = if (!authorKey.isNullOrEmpty()) {
             try {
                 val authorResponse = api.getAuthorDetails(authorKey)
-                authorResponse.authorName ?: ""
+                authorResponse.name ?: ""
             } catch (e: Exception) {
                 "Unable to fetch name"
             }

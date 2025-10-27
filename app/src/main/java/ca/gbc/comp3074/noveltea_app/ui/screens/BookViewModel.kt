@@ -48,10 +48,25 @@ class BookViewModel : ViewModel() {
 
     fun searchBooks(query: String) {
         viewModelScope.launch {
-            val results = repository.getBooksByQuery(query)
-            _books.value = results
+            if (query.isBlank()) {
+                // If user clears search, reload trending books
+                loadTrendingBooks()
+                return@launch
+            }
+
+            _isLoading.value = true
+            try {
+                val results = repository.getBooksByQuery(query)
+                _books.value = results.take(20) // limit number of pulled books
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _books.value = emptyList() // show empty screen if failed
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
+
 
     fun addToReadingList(book: Book) {
         val updated = _readingList.value.toMutableList().apply {
@@ -72,14 +87,10 @@ class BookViewModel : ViewModel() {
             if (none { it.id == book.id }) add(book)
         }
         _reviewedBooks.value = updated
-
     }
 
-    fun loadReviewedBooks(ctx: Context, allBooks: List<Book>) {
-        val ratedIds = allBooks.filter {
-            RatingStore.get(ctx, it.id) > 0f
-        }
-        _reviewedBooks.value = ratedIds
+    fun removeFromReviewList(id: String) {
+        _reviewedBooks.value = _reviewedBooks.value.filterNot { it.id == id }
     }
 
 }

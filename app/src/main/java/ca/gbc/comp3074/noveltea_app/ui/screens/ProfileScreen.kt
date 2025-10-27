@@ -249,6 +249,12 @@ fun ProfileScreen(navController: NavHostController, viewModel: BookViewModel) {
                                     Text(b.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
                                     val myRating = RatingStore.get(ctx, b.id)
                                     if (myRating > 0f) StarDisplay(value = myRating)
+                                    TextButton(onClick = {
+                                        viewModel.removeFromReviewList(b.id)
+                                        android.widget.Toast.makeText(ctx, "Removed: ${b.title}", android.widget.Toast.LENGTH_SHORT).show()
+                                    }) {
+                                        Text("Remove")
+                                    }
                                 }
                             }
                         }
