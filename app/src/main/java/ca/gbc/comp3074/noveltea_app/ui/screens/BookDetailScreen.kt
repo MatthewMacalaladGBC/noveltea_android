@@ -25,9 +25,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,15 +40,27 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import ca.gbc.comp3074.noveltea_app.data.local.RatingStore
 import ca.gbc.comp3074.noveltea_app.data.local.ReadingListStore
-import ca.gbc.comp3074.noveltea_app.model.Book
 import ca.gbc.comp3074.noveltea_app.ui.components.StarRating
 import coil.compose.AsyncImage
 
 // Composable for Details page (book details)
 @Composable
-fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<Book>) {
+fun BookDetailScreen(navController: NavHostController, bookId: String, viewModel: BookViewModel) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val book = books.find { it.id == bookId }
+
+    val bookState = viewModel.selectedBook.collectAsState()
+    val book = bookState.value
+
+    if (book != null) {
+        var rating by remember { mutableFloatStateOf(RatingStore.get(ctx, book.id)) }
+        // use book.title, book.author, etc.
+    }
+
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(bookId) {
+        viewModel.loadBookDetails(bookId)
+    }
 
     Scaffold(
         topBar = {
@@ -104,12 +117,12 @@ fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<
                     Text(book.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(6.dp))
                     Text("by ${book.author}", style = MaterialTheme.typography.bodyLarge)
-                    Spacer(Modifier.height(6.dp))
-                    Text("★ ${book.rating}", style = MaterialTheme.typography.titleLarge)
+//                    Spacer(Modifier.height(6.dp))
+//                    Text("★ ${book.rating}", style = MaterialTheme.typography.titleLarge)
                 }
             }
             item {
-                Text(book.description, style = MaterialTheme.typography.bodyMedium)
+                Text(book.description ?: "No description found", style = MaterialTheme.typography.bodyMedium)
             }
             item {
                 Button(
@@ -119,6 +132,7 @@ fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<
                             android.widget.Toast.makeText(ctx, "Already in your list", android.widget.Toast.LENGTH_SHORT).show()
                         } else {
                             ReadingListStore.add(ctx, book.id)
+                            viewModel.addToReadingList(book)
                             android.widget.Toast.makeText(ctx, "Added to your list", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     },
@@ -133,7 +147,7 @@ fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        RatingStore.set(ctx, book.id, rating)
+                        viewModel.addReviewedBook(ctx, book, rating)
                         android.widget.Toast.makeText(
                             ctx,
                             "Saved rating: ${"%.1f".format(rating)} ★",

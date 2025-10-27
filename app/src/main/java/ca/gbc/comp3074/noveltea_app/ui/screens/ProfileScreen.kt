@@ -13,11 +13,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
@@ -31,12 +32,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,8 +49,6 @@ import androidx.navigation.NavHostController
 import ca.gbc.comp3074.noveltea_app.R
 import ca.gbc.comp3074.noveltea_app.data.local.NameStore
 import ca.gbc.comp3074.noveltea_app.data.local.RatingStore
-import ca.gbc.comp3074.noveltea_app.data.local.ReadingListStore
-import ca.gbc.comp3074.noveltea_app.model.Book
 import ca.gbc.comp3074.noveltea_app.ui.components.StarDisplay
 import coil.compose.AsyncImage
 
@@ -60,13 +58,14 @@ import coil.compose.AsyncImage
 // Books listed in mock-up are just the ones from the mock dataset,
 // but each user will hold their own list of books in actuality
 @Composable
-fun ProfileScreen(navController: NavHostController, books: List<Book>) {
+fun ProfileScreen(navController: NavHostController, viewModel: BookViewModel) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val panelColor = Color(0xFF1F2A44)
     val name = (NameStore.getName(ctx) ?: "Guest").uppercase()
 
-
-    var readingList by remember { mutableStateOf(ReadingListStore.getBooks(ctx, books)) }
+    val readingList by viewModel.readingList.collectAsState()
+    val reviewedBooks by viewModel.reviewedBooks.collectAsState()
+//    var readingList by remember { mutableStateOf(ReadingListStore.getBooks(ctx, books)) }
 
     Scaffold(
         topBar = {
@@ -119,61 +118,145 @@ fun ProfileScreen(navController: NavHostController, books: List<Book>) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Text("Followers 20", color = Color.White, modifier = Modifier.weight(1f))
                         Text("Following 35", color = Color.White, modifier = Modifier.weight(1f))
-                        val reviewsCount = books.count { RatingStore.get(ctx, it.id) > 0f }
+                        val reviewsCount = readingList.count { RatingStore.get(ctx, it.id) > 0f }
                         Text("Reviews $reviewsCount", color = Color.White, modifier = Modifier.weight(1f))
                     }
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
-            Text("Lists", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(Modifier.height(8.dp))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 32.dp)
+            ) {
 
-            if (readingList.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        "Your reading list is empty.\nGo add some books from Home!",
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+                // --- Reading List Header ---
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    Text("Reading List", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(Modifier.height(8.dp))
                 }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    items(readingList, key = { it.id }) { b ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+
+                // --- Reading List Content ---
+                if (readingList.isEmpty()) {
+                    item {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Your reading list is empty.\nGo add some books from Home!",
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    item {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { navController.navigate("detail/${b.id}") }
+                                .heightIn(max = 1200.dp), // prevents infinite height
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp),
+                            contentPadding = PaddingValues(bottom = 16.dp)
                         ) {
-                            Surface(
-                                shadowElevation = 6.dp,
-                                shape = MaterialTheme.shapes.medium,
-                                modifier = Modifier.size(width = 150.dp, height = 220.dp)
-                            ) {
-                                AsyncImage(model = b.coverImgUrl, contentDescription = "Cover for ${b.title}")
+                            items(readingList, key = { it.id }) { b ->
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { navController.navigate("detail/${b.id}") }
+                                ) {
+                                    Surface(
+                                        shadowElevation = 6.dp,
+                                        shape = MaterialTheme.shapes.medium,
+                                        modifier = Modifier.size(width = 150.dp, height = 220.dp)
+                                    ) {
+                                        AsyncImage(model = b.coverImgUrl, contentDescription = "Cover for ${b.title}")
+                                    }
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(b.title, fontWeight = FontWeight.Bold)
+                                    Text(b.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
+                                    val myRating = RatingStore.get(ctx, b.id)
+                                    if (myRating > 0f) StarDisplay(value = myRating)
+                                    TextButton(onClick = {
+                                        viewModel.removeFromReadingList(b.id)
+                                        android.widget.Toast.makeText(ctx, "Removed: ${b.title}", android.widget.Toast.LENGTH_SHORT).show()
+                                    }) {
+                                        Text("Remove")
+                                    }
+                                }
                             }
-                            Spacer(Modifier.height(8.dp))
-                            Text(b.title, fontWeight = FontWeight.Bold)
-                            Text(b.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
+                        }
+                    }
+                }
 
-                            val myRating = RatingStore.get(ctx, b.id)
-                            if (myRating > 0f) StarDisplay(value = myRating)
+                // --- Review List Header ---
+                item {
+                    Spacer(Modifier.height(24.dp))
+                    Text("Review List", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(Modifier.height(8.dp))
+                }
 
-                            androidx.compose.material3.TextButton(onClick = {
-                                ReadingListStore.remove(ctx, b.id)
-                                readingList = ReadingListStore.getBooks(ctx, books)
-                                android.widget.Toast.makeText(ctx, "Removed: ${b.title}", android.widget.Toast.LENGTH_SHORT).show()
-                            }) { Text("Remove") }
+                // --- Review List Content ---
+                if (reviewedBooks.isEmpty()) {
+                    item {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "You haven't reviewed any books yet.",
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    item {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 1200.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp),
+                            contentPadding = PaddingValues(bottom = 16.dp)
+                        ) {
+                            items(reviewedBooks, key = { it.id }) { b ->
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { navController.navigate("detail/${b.id}") }
+                                ) {
+                                    Surface(
+                                        shadowElevation = 6.dp,
+                                        shape = MaterialTheme.shapes.medium,
+                                        modifier = Modifier.size(width = 150.dp, height = 220.dp)
+                                    ) {
+                                        AsyncImage(model = b.coverImgUrl, contentDescription = "Cover for ${b.title}")
+                                    }
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(b.title, fontWeight = FontWeight.Bold)
+                                    Text(b.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
+                                    val myRating = RatingStore.get(ctx, b.id)
+                                    if (myRating > 0f) StarDisplay(value = myRating)
+                                }
+                            }
                         }
                     }
                 }
             }
+
+
         }
     }
 }

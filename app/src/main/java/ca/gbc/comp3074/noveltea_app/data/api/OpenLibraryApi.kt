@@ -1,5 +1,6 @@
 package ca.gbc.comp3074.noveltea_app.data.api
 
+import ca.gbc.comp3074.noveltea_app.model.AuthorDetailResponse
 import ca.gbc.comp3074.noveltea_app.model.BookDetailResponse
 import ca.gbc.comp3074.noveltea_app.model.BookResponse
 import retrofit2.http.GET
@@ -15,5 +16,9 @@ interface OpenLibraryApi {
     // Get detailed information for a specific book (returns relevant info for a specific work pulled from the API)
     @GET("works/{workId}.json")
     suspend fun getBookDetails(@Path("workId") workId: String): BookDetailResponse
+
+    // Needed for pulling author name from Author API (works API returns a key)
+    @GET("authors/{authorId}.json")
+    suspend fun getAuthorDetails(@Path("authorId") authorId: String): AuthorDetailResponse
 
 }

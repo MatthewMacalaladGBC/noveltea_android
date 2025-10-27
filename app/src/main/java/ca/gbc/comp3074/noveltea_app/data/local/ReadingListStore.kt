@@ -11,21 +11,21 @@ object ReadingListStore {
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, MODE_PRIVATE)
 
-    fun add(ctx: Context, bookId: Int) {
+    fun add(ctx: Context, bookId: String) {
         val cur = prefs(ctx).getStringSet(KEY_LIST, emptySet())!!.toMutableSet()
         cur.add(bookId.toString())
         prefs(ctx).edit { putStringSet(KEY_LIST, cur) }
     }
 
-    fun remove(ctx: Context, bookId: Int) {
+    fun remove(ctx: Context, bookId: String) {
         val cur = prefs(ctx).getStringSet(KEY_LIST, emptySet())!!.toMutableSet()
         cur.remove(bookId.toString())
         prefs(ctx).edit { putStringSet(KEY_LIST, cur) }
     }
 
-    fun getIds(ctx: Context): Set<Int> =
+    fun getIds(ctx: Context): Set<String> =
         (prefs(ctx).getStringSet(KEY_LIST, emptySet()) ?: emptySet())
-            .mapNotNull { it.toIntOrNull() }
+            .mapNotNull { it.toString() }
             .toSet()
 
     fun getBooks(ctx: Context, allBooks: List<Book>): List<Book> {

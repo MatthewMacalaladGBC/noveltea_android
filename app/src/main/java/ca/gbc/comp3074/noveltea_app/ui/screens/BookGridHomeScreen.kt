@@ -40,18 +40,27 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import ca.gbc.comp3074.noveltea_app.model.Book
 import ca.gbc.comp3074.noveltea_app.data.local.NameStore
 import ca.gbc.comp3074.noveltea_app.ui.components.NameLogin
 import ca.gbc.comp3074.noveltea_app.R
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.res.painterResource
-
 
 // Composable for Home Screen (book grid layout)
 @Composable
-fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
+fun BookGridHomeScreen(navController: NavHostController, viewModel: BookViewModel) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
+
+    val books by viewModel.books.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadTrendingBooks()
+    }
 
     // user login state
     var name by remember { mutableStateOf(NameStore.getName(ctx)) }
@@ -79,104 +88,109 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
         )
     }
 
-
-    Scaffold(
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.statusBars)
-            ) {
-                // Row #1: title left, login right
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Noveltea", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        Text("By book lovers, for book lovers", style = MaterialTheme.typography.bodySmall)
-                    }
-                    //login or logout button
-                    Button(onClick = {
-                        if (name.isNullOrBlank()) {
-                            showLogin = true
-                        } else {
-                            NameStore.clear(ctx)
-                            name = null
-                            android.widget.Toast.makeText(ctx, "Logged out", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    }) {
-                        Text(if (name.isNullOrBlank()) "Login" else "Logout")
-                    }
-                }
-
-                // Row #2: profile button (left) and search (right)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // avatar button
-                    OutlinedButton(
-                        onClick = { navController.navigate("profile") },
-                        modifier = Modifier.size(40.dp),
-                        contentPadding = PaddingValues(0.dp),
-                        shape = CircleShape
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.face),
-                            contentDescription = "Profile picture"
-                    ) }
-
-                    Spacer(Modifier.width(8.dp))
-
-                    //search text area
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Search…") },
-                        singleLine = true
-                    )
-                }
-            }
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
-    ) { innerPadding ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
-        ) {
-            items(filtered, key = { it.id }) { book ->
+    } else {
+        Scaffold(
+            topBar = {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { navController.navigate("detail/${book.id}") }
+                        .windowInsetsPadding(WindowInsets.statusBars)
                 ) {
-                    Surface(
-                        shadowElevation = 6.dp,
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.size(width = 150.dp, height = 220.dp)
+                    // Row #1: title left, login right
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        coil.compose.AsyncImage(
-                            model = book.coverImgUrl,
-                            contentDescription = "Cover image for ${book.title}"
+                        Column {
+                            Text("Noveltea", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Text("By book lovers, for book lovers", style = MaterialTheme.typography.bodySmall)
+                        }
+                        //login or logout button
+                        Button(onClick = {
+                            if (name.isNullOrBlank()) {
+                                showLogin = true
+                            } else {
+                                NameStore.clear(ctx)
+                                name = null
+                                android.widget.Toast.makeText(ctx, "Logged out", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }) {
+                            Text(if (name.isNullOrBlank()) "Login" else "Logout")
+                        }
+                    }
+
+                    // Row #2: profile button (left) and search (right)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // avatar button
+                        OutlinedButton(
+                            onClick = { navController.navigate("profile") },
+                            modifier = Modifier.size(40.dp),
+                            contentPadding = PaddingValues(0.dp),
+                            shape = CircleShape
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.face),
+                                contentDescription = "Profile picture"
+                            ) }
+
+                        Spacer(Modifier.width(8.dp))
+
+                        //search text area
+                        OutlinedTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Search…") },
+                            singleLine = true
                         )
                     }
-                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        ) { innerPadding ->
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                contentPadding = PaddingValues(vertical = 16.dp)
+            ) {
+                items(filtered, key = { it.id }) { book ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate("detail/${book.id}") }
+                    ) {
+                        Surface(
+                            shadowElevation = 6.dp,
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.size(width = 150.dp, height = 220.dp)
+                        ) {
+                            coil.compose.AsyncImage(
+                                model = book.coverImgUrl,
+                                contentDescription = "Cover image for ${book.title}"
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
 
-                    //Book title and author
-                    Text(book.title, fontWeight = FontWeight.Bold)
-                    Text(book.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
+                        //Book title and author
+                        Text(book.title, fontWeight = FontWeight.Bold)
+                        Text(book.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
+                    }
                 }
             }
         }
