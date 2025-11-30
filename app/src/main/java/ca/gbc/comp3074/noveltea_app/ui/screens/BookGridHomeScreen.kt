@@ -2,6 +2,7 @@
 
 package ca.gbc.comp3074.noveltea_app.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,18 +46,16 @@ import ca.gbc.comp3074.noveltea_app.model.Book
 import ca.gbc.comp3074.noveltea_app.data.local.NameStore
 import ca.gbc.comp3074.noveltea_app.ui.components.NameLogin
 import ca.gbc.comp3074.noveltea_app.R
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
 
-
-// Composable for Home Screen (book grid layout)
+//Home Screen
 @Composable
 fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
 
     // user login state
     var name by remember { mutableStateOf(NameStore.getName(ctx)) }
-    var showLogin by remember { mutableStateOf(false) }
+    var showAuthDialog by remember { mutableStateOf(false) }
+    var isSignUp by remember { mutableStateOf(false) }
 
     // search box
     var query by remember { mutableStateOf("") }
@@ -63,22 +63,38 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
     val filtered = remember(query, books) {
         val q = query.trim().lowercase()
         if (q.isEmpty()) books
-        else books.filter { it.title.lowercase().contains(q) || it.author.lowercase().contains(q) }
+        else books.filter {
+            it.title.lowercase().contains(q) ||
+                    it.author.lowercase().contains(q)
+        }
     }
 
-    // Login
-    if (showLogin) {
+    // Login / Sign up dialog
+    if (showAuthDialog) {
         NameLogin(
-            onDismiss = { showLogin = false },
-            onSubmit = { entered ->
-                NameStore.setName(ctx, entered)
-                name = entered
-                showLogin = false
-                android.widget.Toast.makeText(ctx, "Hello, $entered!", android.widget.Toast.LENGTH_SHORT).show()
+            isSignUp = isSignUp,
+            onDismiss = { showAuthDialog = false },
+            onSubmit = { enteredName, enteredEmail ->
+
+                // Save the name
+                NameStore.setName(ctx, enteredName)
+                name = enteredName
+
+                showAuthDialog = false
+
+                val msg = if (isSignUp)
+                    "Account created for $enteredName (${enteredEmail ?: ""})"
+                else
+                    "Hello, $enteredName!"
+
+                android.widget.Toast.makeText(
+                    ctx,
+                    msg,
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
             }
         )
     }
-
 
     Scaffold(
         topBar = {
@@ -86,7 +102,7 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.statusBars)
             ) {
-                // Row #1: title left, login right
+                // Row #1: title left, auth buttons right
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -95,20 +111,52 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Noveltea", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        Text("By book lovers, for book lovers", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "Noveltea",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "By book lovers, for book lovers",
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
-                    //login or logout button
-                    Button(onClick = {
-                        if (name.isNullOrBlank()) {
-                            showLogin = true
-                        } else {
-                            NameStore.clear(ctx)
-                            name = null
-                            android.widget.Toast.makeText(ctx, "Logged out", android.widget.Toast.LENGTH_SHORT).show()
+
+                    // Right side: Login/Sign up if no user, otherwise greeting + Logout
+                    if (name.isNullOrBlank()) {
+                        Row {
+                            Button(onClick = {
+                                isSignUp = false
+                                showAuthDialog = true
+                            }) {
+                                Text("Login")
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Button(onClick = {
+                                isSignUp = true
+                                showAuthDialog = true
+                            }) {
+                                Text("Sign up")
+                            }
                         }
-                    }) {
-                        Text(if (name.isNullOrBlank()) "Login" else "Logout")
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Hi, $name",
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            Button(onClick = {
+                                NameStore.clear(ctx)
+                                name = null
+                                android.widget.Toast.makeText(
+                                    ctx,
+                                    "Logged out",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }) {
+                                Text("Logout")
+                            }
+                        }
                     }
                 }
 
@@ -129,11 +177,12 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                         Image(
                             painter = painterResource(id = R.drawable.face),
                             contentDescription = "Profile picture"
-                    ) }
+                        )
+                    }
 
                     Spacer(Modifier.width(8.dp))
 
-                    //search text area
+                    // search text area
                     OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
@@ -174,9 +223,13 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                     }
                     Spacer(Modifier.height(8.dp))
 
-                    //Book title and author
+                    // Book title and author
                     Text(book.title, fontWeight = FontWeight.Bold)
-                    Text(book.author, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
+                    Text(
+                        book.author,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontStyle = FontStyle.Italic
+                    )
                 }
             }
         }
