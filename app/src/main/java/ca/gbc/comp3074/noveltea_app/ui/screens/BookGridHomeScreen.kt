@@ -46,10 +46,19 @@ import ca.gbc.comp3074.noveltea_app.model.Book
 import ca.gbc.comp3074.noveltea_app.data.local.NameStore
 import ca.gbc.comp3074.noveltea_app.ui.components.NameLogin
 import ca.gbc.comp3074.noveltea_app.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 
 //Home Screen
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
+fun BookGridHomeScreen(
+    navController: NavHostController, 
+    books: List<Book>,
+    onSearchClick: () -> Unit = {}
+) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
 
     // user login state
@@ -122,8 +131,17 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                         )
                     }
 
-                    // Right side: Login/Sign up if no user, otherwise greeting + Logout
-                    if (name.isNullOrBlank()) {
+                    // Right side: Search + Login/Sign up if no user, otherwise greeting + Logout
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Search button
+                        IconButton(onClick = onSearchClick) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search"
+                            )
+                        }
+                        
+                        if (name.isNullOrBlank()) {
                         Row {
                             Button(onClick = {
                                 isSignUp = false
@@ -140,11 +158,10 @@ fun BookGridHomeScreen(navController: NavHostController, books: List<Book>) {
                             }
                         }
                     } else {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Hi, $name",
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
+                        Text(
+                            text = "Hi, $name",
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
                             Button(onClick = {
                                 NameStore.clear(ctx)
                                 name = null
