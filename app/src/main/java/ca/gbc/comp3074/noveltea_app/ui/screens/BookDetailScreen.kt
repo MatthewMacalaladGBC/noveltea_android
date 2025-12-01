@@ -2,6 +2,7 @@
 
 package ca.gbc.comp3074.noveltea_app.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +28,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,7 +45,12 @@ import coil.compose.AsyncImage
 
 // Composable for Details page (book details)
 @Composable
-fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<Book>) {
+fun BookDetailScreen(
+    navController: NavHostController,
+    bookId: Int,
+    books: List<Book>,
+    onAddToLibrary: (Book) -> Unit // <--- 1. Add this parameter
+) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val book = books.find { it.id == bookId }
 
@@ -111,22 +116,25 @@ fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<
             item {
                 Text(book.description, style = MaterialTheme.typography.bodyMedium)
             }
+
+            // Existing Reading List Button (Keep this if you want both functionalities)
             item {
                 Button(
                     onClick = {
                         val ids = ReadingListStore.getIds(ctx)
                         if (book.id in ids) {
-                            android.widget.Toast.makeText(ctx, "Already in your list", android.widget.Toast.LENGTH_SHORT).show()
+                            Toast.makeText(ctx, "Already in your list", Toast.LENGTH_SHORT).show()
                         } else {
                             ReadingListStore.add(ctx, book.id)
-                            android.widget.Toast.makeText(ctx, "Added to your list", android.widget.Toast.LENGTH_SHORT).show()
+                            Toast.makeText(ctx, "Added to your list", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Add to Reading List")
+                    Text("Add to Reading List (Local)")
                 }
             }
+
             item {
                 Text("Your Rating", fontWeight = FontWeight.Bold)
                 StarRating(value = rating, onChange = { rating = it })
@@ -134,10 +142,10 @@ fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<
                 Button(
                     onClick = {
                         RatingStore.set(ctx, book.id, rating)
-                        android.widget.Toast.makeText(
+                        Toast.makeText(
                             ctx,
                             "Saved rating: ${"%.1f".format(rating)} ★",
-                            android.widget.Toast.LENGTH_SHORT
+                            Toast.LENGTH_SHORT
                         ).show()
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -146,6 +154,21 @@ fun BookDetailScreen(navController: NavHostController, bookId: Int, books: List<
                 }
             }
 
+            // New "Add to Library" Button using the shared state
+            item {
+                Button(
+                    onClick = {
+                        // 2. Use the callback instead of accessing savedBooks directly
+                        onAddToLibrary(book)
+                        Toast.makeText(ctx, "Added to Library Tab", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp)
+                ) {
+                    Text("Add to Library")
+                }
+            }
         }
     }
 }

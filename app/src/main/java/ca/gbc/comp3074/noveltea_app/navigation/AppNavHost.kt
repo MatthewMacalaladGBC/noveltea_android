@@ -1,6 +1,8 @@
 package ca.gbc.comp3074.noveltea_app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -9,35 +11,62 @@ import ca.gbc.comp3074.noveltea_app.data.MockDataset
 import ca.gbc.comp3074.noveltea_app.ui.screens.BookGridHomeScreen
 import ca.gbc.comp3074.noveltea_app.ui.screens.BookDetailScreen
 import ca.gbc.comp3074.noveltea_app.ui.screens.ProfileScreen
+import ca.gbc.comp3074.noveltea_app.ui.screens.LibraryScreen
 import ca.gbc.comp3074.noveltea_app.ui.screens.SearchScreen
 
 @Composable
-fun AppNavHost(){
-    // Sets up the navController and gets list of books from the mock dataset
-    val navController = rememberNavController()
-    val books: List<Book> = MockDataset.getBooks()
+fun AppNavHost(
+    navController: NavHostController = rememberNavController(),
+    savedBooks: SnapshotStateList<Book>
+) {
+    val allBooks = MockDataset.getBooks()
 
-    // Defaults to "home" screen, or BookGridHomeScreen Composable
     NavHost(navController = navController, startDestination = "home") {
-        composable("home") { 
+
+        // HOME
+        composable("home") {
             BookGridHomeScreen(
-                navController = navController, 
-                books = books,
+                navController = navController,
+                books = allBooks,
                 onSearchClick = { navController.navigate("search") }
-            ) 
+            )
         }
+
+        // DETAIL
         composable("detail/{bookId}") { backstackEntry ->
-            // Retrieves bookId based on the bookId passed when clicking on any book in the grid.
-            // Pulls from the passed navigation route, and turns it into an int (with a default of 0 if not found)
             val bookId = backstackEntry.arguments?.getString("bookId")?.toIntOrNull() ?: 0
-            BookDetailScreen(navController = navController, bookId = bookId, books = books)
+
+            BookDetailScreen(
+                navController = navController,
+                bookId = bookId,
+                books = allBooks,
+                onAddToLibrary = { bookToAdd ->
+                    if (savedBooks.none { it.id == bookToAdd.id }) {
+                        savedBooks.add(bookToAdd)
+                    }
+                }
+            )
         }
-composable("profile") { ProfileScreen(navController = navController, books) }
-        composable("search") { 
+
+        // PROFILE
+        composable("profile") {
+            ProfileScreen(navController = navController, books = allBooks)
+        }
+
+        // LIBRARY
+        composable("library") {
+            LibraryScreen(
+                navController = navController,
+                savedBooks = savedBooks
+            )
+        }
+
+        // SEARCH (from main branch)
+        composable("search") {
             SearchScreen(
                 navController = navController,
-                books = books
-            ) 
+                books = allBooks
+            )
         }
     }
 }

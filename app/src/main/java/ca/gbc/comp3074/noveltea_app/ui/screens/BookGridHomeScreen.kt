@@ -22,8 +22,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -177,14 +180,14 @@ fun BookGridHomeScreen(
                     }
                 }
 
-                // Row #2: profile button (left) and search (right)
+                // Row #2: profile button (left), LIBRARY BUTTON (middle), and search (right)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // avatar button
+                    // 1. Profile Button
                     OutlinedButton(
                         onClick = { navController.navigate("profile") },
                         modifier = Modifier.size(40.dp),
@@ -199,7 +202,23 @@ fun BookGridHomeScreen(
 
                     Spacer(Modifier.width(8.dp))
 
-                    // search text area
+                    // 2. NEW: Library Button
+                    OutlinedButton(
+                        onClick = { navController.navigate("library") },
+                        modifier = Modifier.size(40.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Bookmarks,
+                            contentDescription = "Go to Library",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    // 3. Search text area
                     OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
